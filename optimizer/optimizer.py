@@ -1,6 +1,7 @@
+from cell_id_manager import CellIdManager
+from device import Device
 from fetch_devices_from_db import fetch_devices_from_db
-from optimizer.cell_id_manager import CellIdManager
-from optimizer.device import Device
+
 
 async def optimize_devices():
     interval_between_devices = 10

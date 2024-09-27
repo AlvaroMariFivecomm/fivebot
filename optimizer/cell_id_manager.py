@@ -2,8 +2,10 @@
 
 import json
 
-from optimizer.device import Device
-from optimizer.hour_min_manager import HourMinManager
+from device import Device
+from hour_min_manager import HourMinManager
+
+
 
 class CellIdManager:
     def __init__(self, cell_ids: list[str], max_devices_per_hour_global: int, max_devices_per_hour_per_cell: int, interval_between_devices: int):
