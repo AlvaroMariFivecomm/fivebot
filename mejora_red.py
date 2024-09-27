@@ -24,7 +24,7 @@ class Mejora:
             SELECT
                 SUBSTRING(dp.report_time, 1, 2) AS hour,
                 COUNT(*) AS count
-            FROM wiot_db.DEVICE dp
+            FROM narrow_db.DEVICE dp
             WHERE dp.fw != ''
             GROUP BY hour
         ) AS a
@@ -32,7 +32,7 @@ class Mejora:
             SELECT
                 HOUR(dp.last_message_sent) AS hour,
                 COUNT(*) AS count
-            FROM wiot_db.DEVICE dp
+            FROM narrow_db.DEVICE dp
             WHERE DATE(dp.last_message_sent) = CURDATE()
             AND dp.fw != ''
             GROUP BY hour
