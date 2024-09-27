@@ -1,16 +1,14 @@
 import time
-from optimizer.device import Device
-from optimizer.fetch_devices_from_db import fetch_devices_from_db
-from optimizer.cell_id_manager import CellIdManager
 
-async def optimize_devices():
+from cell_id_manager import CellIdManager
+from device import Device
+from fetch_devices_from_db import fetch_devices_from_db
+
+
+def optimize_devices(interval_between_device_reports = 5, max_global_devices_per_hour = 500, max_devices_per_cell_per_hour = 10):
     start_time = time.time()
 
-    interval_between_device_reports = 20
-    max_global_devices_per_hour = 500
-    max_devices_per_cell_per_hour = 8
-
-    devices = await fetch_devices_from_db()
+    devices = fetch_devices_from_db()
     cell_ids = Device.get_all_cell_ids(devices)
 
     cell_id_manager = CellIdManager(
@@ -23,7 +21,7 @@ async def optimize_devices():
     sorted_devices_by_cell_id = Device.group_and_sort_devices_by_cell_id(devices, True)
     conflicting_devices = []
 
-    for cell_id, devices_in_cell_id in sorted_devices_by_cell_id.items():
+    for cell_id, devices_in_cell_id in sorted_devices_by_cell_id:
         for device in devices_in_cell_id:
             if not cell_id_manager.add_device(cell_id, device.get_report_hour(), device.get_report_min(), device):
                 conflicting_devices.append(device)
@@ -79,4 +77,3 @@ async def optimize_devices():
 
     elapsed_time = time.time() - start_time
     print(f"OptimizeDevicesExecutionTime: {elapsed_time:.2f} seconds")
-

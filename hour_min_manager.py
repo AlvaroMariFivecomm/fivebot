@@ -1,5 +1,6 @@
-from optimizer.device import Device
 from typing import Optional, Dict
+
+from device import Device
 
 class HourMinManager:
     def __init__(self, interval_between_devices: int):

@@ -1,7 +1,8 @@
 import mysql.connector
 from typing import List
 
-from optimizer.device import Device
+from device import Device
+
 
 def fetch_devices_from_db() -> List[Device]:
     db_config = {

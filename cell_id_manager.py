@@ -1,6 +1,6 @@
 import json
-from optimizer.device import Device
-from optimizer.hour_min_manager import HourMinManager
+from hour_min_manager import HourMinManager
+from device import Device
 
 class CellIdManager:
     def __init__(self, cell_ids, max_devices_per_hour_global, max_devices_per_hour_per_cell, interval_between_devices):
@@ -10,16 +10,17 @@ class CellIdManager:
         self.matrix = self._generate_empty_cell_matrix(cell_ids, interval_between_devices)
 
     def _generate_empty_cell_matrix(self, cell_ids, interval_between_devices):
-        return {cell_id: HourMinManager(interval_between_devices) for cell_id in cell_ids}
+        matrix = {cell_id: HourMinManager(interval_between_devices) for cell_id in cell_ids}
+        return matrix
 
     def _get_total_devices_in_hour(self, hour):
-        total = sum(self.matrix[cell_id].get_devices_in_hour(hour) for cell_id in self.matrix)
+        total = sum(self.matrix[cell_id].get_total_devices_in_hour(hour) for cell_id in self.matrix)
         return total
 
     def add_device(self, cell_id, hour, minute, device):
         if cell_id in self.matrix:
             total_devices_in_hour = self._get_total_devices_in_hour(hour)
-            devices_in_cell_hour = self.matrix[cell_id].get_devices_in_hour(hour)
+            devices_in_cell_hour = self.matrix[cell_id].get_total_devices_in_hour(hour)
 
             if total_devices_in_hour >= self.max_devices_per_hour_global:
                 print(f"No se puede añadir el dispositivo. Se ha alcanzado el máximo de {self.max_devices_per_hour_global} dispositivos globales por hora.")
@@ -43,7 +44,7 @@ class CellIdManager:
             return False
 
         total_devices_in_hour = self._get_total_devices_in_hour(0)
-        devices_in_cell_hour = self.matrix[cell_id].get_devices_in_hour(0)
+        devices_in_cell_hour = self.matrix[cell_id].get_total_devices_in_hour(0)
 
         if total_devices_in_hour < self.max_devices_per_hour_global and devices_in_cell_hour < self.max_devices_per_hour_per_cell:
             for minute in range(device.get_report_min()):
@@ -62,7 +63,7 @@ class CellIdManager:
 
         for hour in sorted_hours:
             total_devices_in_hour = self._get_total_devices_in_hour(hour)
-            devices_in_cell_hour = self.matrix[cell_id].get_devices_in_hour(hour)
+            devices_in_cell_hour = self.matrix[cell_id].get_total_devices_in_hour(hour)
 
             if total_devices_in_hour < self.max_devices_per_hour_global and devices_in_cell_hour < self.max_devices_per_hour_per_cell:
                 for minute in range(60):
@@ -81,7 +82,7 @@ class CellIdManager:
         sorted_hours = sorted(devices_per_hour_global, key=devices_per_hour_global.get)
 
         for hour in sorted_hours:
-            devices_in_cell_hour = self.matrix[cell_id].get_devices_in_hour(hour)
+            devices_in_cell_hour = self.matrix[cell_id].get_total_devices_in_hour(hour)
 
             if devices_in_cell_hour < self.max_devices_per_hour_per_cell:
                 for minute in range(60):

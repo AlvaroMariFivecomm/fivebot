@@ -5,6 +5,8 @@ from mantenimiento import Mantenimiento
 from mejora_red import Mejora
 from azure.core.credentials import AzureKeyCredential
 
+from optimizer import optimize_devices
+
 # Configurar las credenciales de Azure OpenAI
 openai.api_type = "azure"
 openai.api_base = "https://botdefivecomm.openai.azure.com/"
@@ -218,9 +220,10 @@ def iniciar_asistente():
 
         mejora.desconectar()
         iniciar_asistente()
-    elif respuesta == '3':
+    elif tipo_reporte == '3':
         limpiar_pantalla()
         print("📈 Ha seleccionado la opción de optimizar la red de los dispositivos por report time.")
+        optimize_devices()
     
     else:
         mostrar_mensaje_azure("⚠️ Opción no válida. Por favor, elija una opción válida (1 o 2).")
