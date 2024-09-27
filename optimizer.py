@@ -3,6 +3,7 @@ import time
 from cell_id_manager import CellIdManager
 from device import Device
 from fetch_devices_from_db import fetch_devices_from_db
+from main import hacer_pregunta_azure, mostrar_mensaje_azure
 
 
 def optimize_devices(interval_between_device_reports = 5, max_global_devices_per_hour = 500, max_devices_per_cell_per_hour = 10):
@@ -25,6 +26,8 @@ def optimize_devices(interval_between_device_reports = 5, max_global_devices_per
         for device in devices_in_cell_id:
             if not cell_id_manager.add_device(cell_id, device.get_report_hour(), device.get_report_min(), device):
                 conflicting_devices.append(device)
+    
+    mostrar_mensaje_azure(f"Se han encontrado un total de {len(conflicting_devices)} dispositivos que no cumplen con las condiciones")
 
     unassigned_devices = []
     sorted_conflicting_devices = Device.sort_by_report_time(conflicting_devices)
@@ -65,11 +68,14 @@ def optimize_devices(interval_between_device_reports = 5, max_global_devices_per
     reallocated_count = len(reallocated_devices)
     unallocatable_count = len(unallocatable_devices)
 
-    print(f"{assigned_percentage}% --- {len(devices) - len(unassigned_devices)} dispositivos asignados correctamente.")
-    print(f"{reassigned_count} dispositivos reasignados con reportTime posterior.")
-    print(f"{reallocated_count} dispositivos reasignados sin tener en cuenta los reportTimes antes de la optimización.")
-    print(f"{unallocatable_count} dispositivos no se pudieron reasignar.")
+    mostrar_mensaje_azure(f"{assigned_percentage}% --- {len(devices) - len(unassigned_devices)} dispositivos asignados correctamente.")
+    mostrar_mensaje_azure(f"{reassigned_count} dispositivos reasignados con reportTime posterior.")
+    mostrar_mensaje_azure(f"{reallocated_count} dispositivos reasignados sin tener en cuenta los reportTimes antes de la optimización.")
+    mostrar_mensaje_azure(f"{unallocatable_count} dispositivos no se pudieron reasignar.")
 
+    optimize_again = hacer_pregunta_azure('Pregúntale al usuario si con la información después de la optimización está a corde o quiere cambiar los parámetros de nuevo.')
+    if 'cambiar' in optimize_again:
+        return False
     for device in unallocatable_devices:
         print(f"\n{device.sn} -- {device.report_time} -- {device.cell_id}")
 

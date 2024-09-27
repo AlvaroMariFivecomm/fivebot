@@ -5,7 +5,7 @@ from mantenimiento import Mantenimiento
 from mejora_red import Mejora
 from azure.core.credentials import AzureKeyCredential
 
-from optimizer import optimize_devices
+from optimizer.optimizer import optimize_devices
 
 # Configurar las credenciales de Azure OpenAI
 openai.api_type = "azure"
@@ -83,6 +83,17 @@ def mostrar_menu_formal():
     else:
         mostrar_mensaje_azure("Lo siento, no he podido entender su elección. Por favor, seleccione '1' para mantenimiento, '2' para resolver los conflictos o '3' para optimizar la red.")
         return mostrar_menu_formal()
+
+
+def opcion_optimizar():
+    limpiar_pantalla()
+    print("📈 Ha seleccionado la opción de optimizar la red de los dispositivos por report time.")
+    interval_between_device_reports = hacer_pregunta_azure('Indicale al usuario que seleccione el intervalo de tiempo mínimo entre la comunicación de dos dispositivos en una misma celda')
+    max_global_devices_per_hour = hacer_pregunta_azure('Indicale al usuario que proporcione el número máximo de dispositivos por hora en la red')
+    max_devices_per_cell_per_hour = hacer_pregunta_azure('Indicale al usuario que proporcione el número máximo de dispositivos por hora que comparten celda')
+
+    return optimize_devices(interval_between_device_reports, max_global_devices_per_hour, max_devices_per_cell_per_hour)
+
 
 # Función principal del asistente
 def iniciar_asistente():
@@ -221,10 +232,9 @@ def iniciar_asistente():
         mejora.desconectar()
         iniciar_asistente()
     elif tipo_reporte == '3':
-        limpiar_pantalla()
-        print("📈 Ha seleccionado la opción de optimizar la red de los dispositivos por report time.")
-        optimize_devices()
-    
+        ans = opcion_optimizar()
+        if ans == False:
+            opcion_optimizar
     else:
         mostrar_mensaje_azure("⚠️ Opción no válida. Por favor, elija una opción válida (1 o 2).")
         iniciar_asistente()
