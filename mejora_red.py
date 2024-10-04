@@ -24,16 +24,16 @@ class Mejora:
             SELECT
                 SUBSTRING(dp.report_time, 1, 2) AS hour,
                 COUNT(*) AS count
-            FROM narrow_db.DEVICE dp
+            FROM narrow_db.DEVICE_PROPERTIES dp
             WHERE dp.fw != ''
             GROUP BY hour
         ) AS a
         LEFT JOIN (
             SELECT
-                HOUR(dp.last_message_sent) AS hour,
+                HOUR(dp.last_mssg_send) AS hour,
                 COUNT(*) AS count
-            FROM narrow_db.DEVICE dp
-            WHERE DATE(dp.last_message_sent) = CURDATE()
+            FROM narrow_db.DEVICE_PROPERTIES dp
+            WHERE DATE(dp.last_mssg_send) = CURDATE()
             AND dp.fw != ''
             GROUP BY hour
         ) AS b
@@ -46,11 +46,11 @@ class Mejora:
     def hubs_enviados(self):
         """Mostrar los hubs que han comunicado"""
         consulta = """SELECT 
-            dp.id, dp.sn, dp.last_message_sent
+            dp.id, dp.sn, dp.last_mssg_send
         FROM 
-            DEVICE dp
+            DEVICE_PROPERTIES dp
         WHERE
-            DATE(dp.last_message_sent) = CURDATE()
+            DATE(dp.last_mssg_send) = CURDATE()
         """
         resultados = self.db.ejecutar_consulta(consulta)
         
@@ -65,24 +65,24 @@ class Mejora:
             writer = csv.writer(file)
             
             # Escribir la cabecera del CSV
-            writer.writerow(['ID', 'Device ID', 'Last Message Sent'])
+            writer.writerow(['ID', 'DEVICE_PROPERTIESID', 'Last Message Sent'])
             
             # Escribir cada fila con los resultados
-            for id, sn, last_message_sent in resultados:
-                writer.writerow([id, sn, last_message_sent])
+            for id, sn, last_mssg_send in resultados:
+                writer.writerow([id, sn, last_mssg_send])
 
         return resultados
     
     def conflictos_report_time(self, hour):
         """Dispositivos cuyos reportes están todos dentro de 5 minutos para una hora específica"""
         consulta = f"""SELECT DISTINCT dp1.sn, c1.CID, dp1.report_time
-            FROM DEVICE dp1
+            FROM DEVICE_PROPERTIES dp1
             JOIN COVERAGE c1 ON c1.device_id = dp1.id
             WHERE DATE(c1.`timestamp`) = DATE(NOW() - INTERVAL 1 DAY)
             AND SUBSTRING(dp1.report_time, 1, 2) = '{hour:02d}'
             AND (c1.CID, dp1.report_time) IN (
                 SELECT c2.CID, dp2.report_time
-                FROM DEVICE dp2
+                FROM DEVICE_PROPERTIES dp2
                 JOIN COVERAGE c2 ON c2.device_id = dp2.id
                 WHERE DATE(c2.`timestamp`) = DATE(NOW() - INTERVAL 1 DAY)
                 GROUP BY c2.CID, dp2.report_time
@@ -98,7 +98,7 @@ class Mejora:
         y tenga al menos 3 minutos de diferencia con los tiempos existentes.
         """
         # Convertir el report_time en un objeto de tipo datetime (solo tiempo, sin fecha)
-        hora_actual = datetime.strptime(report_time, '%H:%M')
+        hora_actual = datetime.strptime(report_time, '%H:%M').replace(minute=0)
 
         # Aumentar el tiempo en 3 minutos hasta encontrar un tiempo que cumpla con la condición
         while True:
@@ -139,7 +139,7 @@ class Mejora:
         for cid, dispositivos in conflictos_por_cid.items():
             # Consultar todos los report_time de la misma celda (CID) para evitar conflictos
             consulta = f"""SELECT report_time 
-            FROM DEVICE dp 
+            FROM DEVICE_PROPERTIES dp 
             JOIN COVERAGE c ON c.device_id = dp.id 
             WHERE c.CID = '{cid}'
             """
@@ -170,7 +170,7 @@ class Mejora:
             if confirmacion == 's':
                 # Si el usuario acepta, realizar los cambios
                 for sn, cid, old_time, new_time in cambios_propuestos:
-                    consulta_update = f"""UPDATE DEVICE dp
+                    consulta_update = f"""UPDATE DEVICE_PROPERTIES dp
                     JOIN COVERAGE c ON c.device_id = dp.id
                     SET dp.report_time = '{new_time}'
                     WHERE dp.sn = '{sn}'
@@ -178,7 +178,11 @@ class Mejora:
                     self.db.ejecutar_consulta(consulta_update)
                 
                 print("✅ Los cambios han sido aplicados a la base de datos.")
+                return cambios_propuestos
             else:
                 print("❌ Los cambios han sido cancelados.")
+                return False
+            
         else:
             print("No se encontraron cambios propuestos.")
+            return None

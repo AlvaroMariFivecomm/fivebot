@@ -8,9 +8,9 @@ def fetch_devices_from_db() -> List[Device]:
     db_config = {
         'user': 'root',
         'password': 'Fivecomm',
-        'host': '172.17.0.2', 
-        'port': 3306,
-        'database': 'wiot_db'
+        'host': 'localhost', 
+        'port': 3307,
+        'database': 'narrow_db'
     }
 
     connection = mysql.connector.connect(**db_config)
@@ -24,20 +24,20 @@ def fetch_devices_from_db() -> List[Device]:
                 d.report_time,
                 c.cid
             FROM 
-                DEVICE d
+                DEVICE_PROPERTIES d
             LEFT JOIN 
-                (
+                COVERAGE c ON d.id = c.device_id
+                AND c.timestamp = (
                     SELECT 
-                        device_id,
-                        cid,
-                        MAX(timestamp) AS latest_timestamp
+                        MAX(c2.timestamp)
                     FROM 
-                        COVERAGE
-                    GROUP BY 
-                        device_id
-                ) c ON d.id = c.device_id
+                        COVERAGE c2
+                    WHERE 
+                        c2.device_id = c.device_id
+                )
             WHERE
-                c.cid IS NOT NULL 
+                c.cid IS NOT NULL;
+
         """
         cursor.execute(query)
         rows = cursor.fetchall()
